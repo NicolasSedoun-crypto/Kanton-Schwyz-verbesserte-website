@@ -1,0 +1,33 @@
+import assert from 'node:assert/strict';
+const origin='http://127.0.0.1:4185';
+let cookies=new Map();
+function capture(res){for(const c of res.headers.getSetCookie()){const pair=c.split(';')[0];const i=pair.indexOf('=');cookies.set(pair.slice(0,i),pair.slice(i+1))}}
+async function call(path,method='GET',body,extra={}){const r=await fetch(origin+path,{method,redirect:'manual',headers:{Cookie:[...cookies].map(([k,v])=>`${k}=${v}`).join('; '),Origin:origin,'X-Requested-With':'SchwyzPortal','Content-Type':'application/json',...extra},...(body===undefined?{}:{body:JSON.stringify(body)})});capture(r);let data;try{data=await r.json()}catch{}return {status:r.status,data,headers:r.headers}}
+assert.equal((await call('/api/drafts')).status,401,'Guest cannot access drafts');
+await call('/signin-with-chatgpt?return_to=/');
+assert.equal((await call('/api/me')).status,200);
+const suffix=crypto.randomUUID();const email=`test-${suffix}@example.com`;const password=`Only-Test-${suffix}`;
+assert.equal((await call('/api/register','POST',{email,password,consent:true},{Origin:'https://untrusted.example'})).status,403,'Cross-origin write rejected');
+assert.equal((await call('/api/register','POST',{email,password:'short',consent:true})).status,400,'Short password rejected');
+assert.equal((await call('/api/register','POST',{email,password,consent:true,profile:{vorname:'Test'}})).status,200,'Registration succeeds');
+await call('/api/profile','PUT',{profile:{vorname:'Test',nachname:'Muster',ort:'Schwyz',gemeinde:'Schwyz'}});
+assert.equal((await call('/api/me')).data.user.profile.ort,'Schwyz','Profile persisted');
+await call('/api/drafts','PUT',{service:1,step:1,answers:{hund:'Bello',chip:'Testchip'},status:'draft'});
+const drafts=(await call('/api/drafts')).data.drafts;
+assert.equal(drafts[0].answers.hund,'Bello');
+await call('/api/logout','POST',{});
+assert.equal((await call('/api/drafts')).status,401,'Logout invalidates session');
+assert.equal((await call('/api/login','POST',{email,password:'Incorrect-Password'})).status,401,'Wrong password rejected');
+await call('/api/login','POST',{email,password});
+assert.equal((await call('/api/drafts')).data.drafts[0].answers.hund,'Bello','Draft survives re-login');
+await call('/api/logout','POST',{});
+await call('/api/register','POST',{email:`other-${suffix}@example.com`,password,consent:true});
+assert.equal((await call('/api/drafts')).data.drafts.length,0,'Second account cannot read first account drafts');
+await call('/api/drafts/'+drafts[0].id,'DELETE');
+await call('/api/logout','POST',{});await call('/api/login','POST',{email,password});
+assert.equal((await call('/api/drafts')).data.drafts.length,1,'Second account cannot delete another account draft');
+await call('/api/drafts','PUT',{service:1,step:3,answers:{hund:'Bello'},status:'complete'});
+assert.equal((await call('/api/drafts')).data.drafts[0].status,'complete');
+await call('/api/drafts/'+drafts[0].id,'DELETE');
+assert.equal((await call('/api/drafts')).data.drafts.length,0,'Own draft can be deleted');
+console.log('PASS: registration, validation, CSRF, profile persistence, draft persistence, login/logout, account isolation, completion and deletion.');
