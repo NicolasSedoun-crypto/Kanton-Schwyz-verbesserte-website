@@ -45,10 +45,47 @@ let state={topic:null,filter:'all',limit:6};
 $('#topics').innerHTML=topics.map((t,i)=>`<button class="topic" data-topic="${i}" aria-pressed="false"><span class="topic-icon" aria-hidden="true">${t[1]}</span><span>${t[0]}</span></button>`).join('');
 const norm=s=>s.toLocaleLowerCase('de-CH').normalize('NFD').replace(/[\u0300-\u036f]/g,'');
 function searchMatches(query){
- const tokens=norm(query.trim()).split(/\s+/).filter(Boolean);
+ const stopwords=new Set(['ich','mochte','moechte','will','brauche','benotige','benoetige','suche','wie','wo','was','kann','man','mein','meine','meinen','meiner','einen','eine','ein','der','die','das','den','dem','des','fur','fuer','und','oder','bitte']);
+ const tokens=norm(query.trim()).replace(/[^a-z0-9]+/g,' ').split(/\s+/).filter(t=>t&&!stopwords.has(t));
  if(!tokens.length)return [];
- const aliases={0:'wohnsitz wohnsitzbestatigung wohnsitzbescheinigung dokument',1:'tier tiere haustier hund hunde hundeanmeldung hunderegistrierung',5:'tier tiere haustier hund hunde ersthalter ersthundehalter hunderegistrierung',17:'tier tiere haustier hund hunde hundeabmeldung'};
- return services.filter(s=>tokens.every(t=>norm(s.title+' '+s.description+' '+topics[s.topic][0]+' '+(aliases[s.id]||'')).includes(t)));
+ const aliases={
+  0:'wohnsitzbestatigung wohnsitzbescheinigung wohnbestatigung wohnbescheinigung adresse nachweis dokument sbb ski abo',
+  1:'tier tiere haustier hund hunde hundeanmeldung hund registrieren amicus chip',
+  2:'steuer steuern steuererklarung steuererklärung frist verlangern verlaengern verlangerung verlaengerung abgabe aufschub mehr zeit',
+  3:'zugeln zuegeln umziehen ummeldung adressanderung adressaenderung neue adresse wohnortswechsel e umzug anmelden abmelden',
+  4:'pass passport reisepass schweizer pass id identitatskarte identitaetskarte ausweis ausweispapiere erneuern beantragen',
+  5:'tier tiere haustier hund hunde ersthalter ersthundehalter ersthund hundehalter registrieren registrierung amicus personen id erster hund',
+  6:'adresse adresssuche personensuche adressauskunft auskunft person suchen wohnadresse',
+  7:'lotterie lotteriefonds forderung foerderung projekt beitrag finanzierung unterstutzung unterstuetzung gesuch verein',
+  8:'sozialhilfe sozialamt sozialhilfebestatigung sozialhilfe nachweis bezug bescheinigung',
+  9:'internetbetrug online betrug cybercrime phishing hacking gehackt internet kriminalitat kriminalitaet scam anzeige',
+  10:'gestohlen bestohlen geklaut diebstahlanzeige diebstahl polizei anzeige',
+  11:'bundessteuer raten ratenzahlung teilzahlung rechnung aufteilen zahlungsplan steuer raten bezahlen',
+  12:'bundessteuer zahlungsaufschub zahlungsfrist verlangern verlaengern spater spaeter bezahlen rechnung frist',
+  13:'auto fahrzeug halterauskunft halter abfrage nummernschild kennzeichen kontrollschild nummer wem gehort gehoert',
+  14:'auto mfk motorfahrzeugkontrolle fahrzeugprufung fahrzeugpruefung termin verschieben andern aendern aufgebot',
+  15:'feuer feuerbewilligung feuer machen feuerstelle verbrennen bewilligung',
+  16:'heimatausweis wochenaufenthalt wochenaufenthalter aufenthaltsausweis dokument',
+  17:'tier tiere haustier hund hunde hundeabmeldung wegzug verstorben tod hund abmelden',
+  18:'bibliothek bucher buecher buch medien ausleihen leihen katalog suchen lesen bibliothekskatalog',
+  19:'auto nummernschild kennzeichen wunschnummer auktion versteigerung bieten ersteigern kontrollschild',
+  20:'auto nummernschild kennzeichen kontrollschild verloren verlust verlustmeldung ersatz',
+  21:'militar militaer armee rs wk dienst dienstpflicht aufgebot militar dienst militaerdienst',
+  22:'busse bussen bussgeld strafzettel parkbusse ordnungsbusse bezahlen zahlung qr rechnung',
+  23:'polizei polizeiwache polizeistation posten standort kontakt finden suchen',
+  24:'sachschaden vandalismus beschadigt beschaedigt kaputt sachbeschadigung sachbeschaedigung anzeige',
+  25:'sport sportbus bus kleinbus verein vereinsbus reservieren beantragen mieten transport',
+  26:'strafregister leumund leumundszeugnis strafregisterauszug privater auszug sonderprivatauszug dokument',
+  27:'theorie theorieprufung theoriepruefung fahrprufung fahrpruefung fuhrerausweis fuehrerausweis fuhrerschein fuehrerschein auto prufung pruefung termin buchen',
+  28:'waffe waffen kauf kaufen waffenkauf waffenerwerb ubertragung uebertragung melden',
+  29:'wehrpflicht wehrpflichtersatz ersatzabgabe militar militaer geld zuruck zurueck ruckerstattung rueckerstattung erstattung',
+  30:'wehrpflicht wehrpflichtersatz ersatzabgabe militar militaer raten teilzahlung zahlungsplan ratenzahlung bezahlen'
+ };
+ return services.map(s=>{
+  const title=norm(s.title),alias=norm(aliases[s.id]||''),body=norm(topics[s.topic][0]);
+  if(!tokens.every(t=>(title+' '+alias+' '+body).includes(t)))return null;
+  return {service:s,score:tokens.reduce((n,t)=>n+(title.includes(t)?4:alias.includes(t)?2:1),0)};
+ }).filter(Boolean).sort((a,b)=>b.score-a.score||a.service.id-b.service.id).map(hit=>hit.service);
 }
 const searchPanel=document.createElement('div');
 searchPanel.id='search-results';searchPanel.className='search-results';searchPanel.hidden=true;searchPanel.setAttribute('role','region');searchPanel.setAttribute('aria-label','Passende Dienstleistungen');
@@ -58,7 +95,7 @@ function hideSearchResults(){searchPanel.hidden=true;$('#search').setAttribute('
 function showSearchResults(){
  const query=$('#search').value.trim();if(!query){hideSearchResults();return}
  const matches=searchMatches(query);
- searchPanel.innerHTML=`<div class="search-results-heading" role="status">${matches.length?`${matches.length} passende ${matches.length===1?'Dienstleistung':'Dienstleistungen'}`:'Keine passende Dienstleistung gefunden'}</div>${matches.length?matches.slice(0,8).map(s=>`<button type="button" class="search-result" data-search-service="${s.id}"><span><strong>${escapeHTML(s.title)}</strong><small>${escapeHTML(s.description)}</small></span><span aria-hidden="true">→</span></button>`).join(''):`<p class="search-empty">Versuchen Sie zum Beispiel «Hund», «Tier», «Wohnsitz» oder «Steuer».</p>`}${matches.length>8?'<p class="search-more">Die ersten 8 Treffer. Geben Sie einen genaueren Suchbegriff ein.</p>':''}`;
+ searchPanel.innerHTML=`<div class="search-results-heading" role="status">${matches.length?`${matches.length} passende ${matches.length===1?'Dienstleistung':'Dienstleistungen'}`:'Keine passende Dienstleistung gefunden'}</div>${matches.length?matches.map(s=>`<button type="button" class="search-result" data-search-service="${s.id}"><span><strong>${escapeHTML(s.title)}</strong><small>${escapeHTML(s.description)}</small></span><span aria-hidden="true">→</span></button>`).join(''):`<p class="search-empty">Versuchen Sie zum Beispiel «Auto», «Pass», «Steuern», «Umzug» oder «Hund».</p>`}`;
  searchPanel.hidden=false;$('#search').setAttribute('aria-expanded','true');
 }
 searchPanel.onclick=e=>{const button=e.target.closest('[data-search-service]');if(!button)return;$('#search').focus({preventScroll:true});hideSearchResults();openService(services[+button.dataset.searchService])};
