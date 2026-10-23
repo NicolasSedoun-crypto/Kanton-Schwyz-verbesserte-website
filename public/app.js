@@ -44,16 +44,14 @@ $('#municipality').innerHTML+=municipalities.map(m=>`<option>${m}</option>`).joi
 let state={topic:null,filter:'all',limit:6};
 $('#topics').innerHTML=topics.map((t,i)=>`<button class="topic" data-topic="${i}" aria-pressed="false"><span class="topic-icon" aria-hidden="true">${t[1]}</span><span>${t[0]}</span></button>`).join('');
 const norm=s=>s.toLocaleLowerCase('de-CH').normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-function searchMatches(query){
- const stopwords=new Set(['ich','mochte','moechte','will','brauche','benotige','benoetige','suche','wie','wo','was','kann','man','mein','meine','meinen','meiner','einen','eine','ein','der','die','das','den','dem','des','fur','fuer','und','oder','bitte']);
- const tokens=norm(query.trim()).replace(/[^a-z0-9]+/g,' ').split(/\s+/).filter(t=>t&&!stopwords.has(t));
- if(!tokens.length)return [];
- const aliases={
+const searchStopwords=new Set(['ich','mochte','moechte','will','brauche','benotige','benoetige','suche','wie','wo','was','kann','konnte','man','mein','meine','meinen','meiner','meinem','einen','eine','ein','einem','der','die','das','den','dem','des','fur','fuer','und','oder','bitte','habe','haben','hat','ist','sind','es','mich','mir','wir','uns','unser','unsere','du','sie','zu','zum','zur','im','in','mit','von','auf','auch','online','neu','lassen','machen']);
+const searchTokens=query=>norm(query.trim()).replace(/[^a-z0-9]+/g,' ').split(/\s+/).filter(t=>t&&!searchStopwords.has(t));
+const aliases={
   0:'wohnsitzbestatigung wohnsitzbescheinigung wohnbestatigung wohnbescheinigung adresse nachweis dokument sbb ski abo',
   1:'tier tiere haustier hund hunde hundeanmeldung hund registrieren amicus chip',
   2:'steuer steuern steuererklarung steuererklärung frist verlangern verlaengern verlangerung verlaengerung abgabe aufschub mehr zeit',
   3:'zugeln zuegeln umziehen ummeldung adressanderung adressaenderung neue adresse wohnortswechsel e umzug anmelden abmelden',
-  4:'pass passport reisepass schweizer pass id identitatskarte identitaetskarte ausweis ausweispapiere erneuern beantragen',
+  4:'pass passport reisepass schweizer pass id identitatskarte identitaetskarte ausweis ausweispapiere erneuern beantragen verloren abgelaufen',
   5:'tier tiere haustier hund hunde ersthalter ersthundehalter ersthund hundehalter registrieren registrierung amicus personen id erster hund',
   6:'adresse adresssuche personensuche adressauskunft auskunft person suchen wohnadresse',
   7:'lotterie lotteriefonds forderung foerderung projekt beitrag finanzierung unterstutzung unterstuetzung gesuch verein',
@@ -80,35 +78,96 @@ function searchMatches(query){
   28:'waffe waffen kauf kaufen waffenkauf waffenerwerb ubertragung uebertragung melden',
   29:'wehrpflicht wehrpflichtersatz ersatzabgabe militar militaer geld zuruck zurueck ruckerstattung rueckerstattung erstattung',
   30:'wehrpflicht wehrpflichtersatz ersatzabgabe militar militaer raten teilzahlung zahlungsplan ratenzahlung bezahlen'
- };
- return services.map(s=>{
-  const title=norm(s.title),alias=norm(aliases[s.id]||''),body=norm(topics[s.topic][0]);
-  if(!tokens.every(t=>(title+' '+alias+' '+body).includes(t)))return null;
-  return {service:s,score:tokens.reduce((n,t)=>n+(title.includes(t)?4:alias.includes(t)?2:1),0)};
- }).filter(Boolean).sort((a,b)=>b.score-a.score||a.service.id-b.service.id).map(hit=>hit.service);
+};
+// Bounded Damerau-Levenshtein: one typo from four characters, two from eight.
+// Only used when there is no exact match; short terms such as ID stay exact.
+function searchDistance(a,b){
+ const d=Array.from({length:a.length+1},()=>Array(b.length+1).fill(0));
+ for(let i=0;i<=a.length;i++)d[i][0]=i;
+ for(let j=0;j<=b.length;j++)d[0][j]=j;
+ for(let i=1;i<=a.length;i++)for(let j=1;j<=b.length;j++){
+  d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));
+  if(i>1&&j>1&&a[i-1]===b[j-2]&&a[i-2]===b[j-1])d[i][j]=Math.min(d[i][j],d[i-2][j-2]+1);
+ }
+ return d[a.length][b.length];
 }
+const searchIndex=services.map(service=>({service,fields:[norm(service.title),norm(aliases[service.id]||''),norm(topics[service.topic][0])].map(text=>({text,words:text.split(/[^a-z0-9]+/).filter(Boolean)}))}));
+function findSearchResults(query){
+ const tokens=searchTokens(query).slice(0,16);
+ if(!tokens.length)return {matches:[],approximate:false};
+ function rank(fuzzy){
+  return searchIndex.map(({service,fields})=>{
+   let score=0;
+   for(const token of tokens){
+    let best=0;
+    fields.forEach(({text,words},i)=>{
+     const weight=[12,7,2][i];
+     if(text.includes(token))best=Math.max(best,weight+(words.includes(token)?5:0));
+     else if(fuzzy&&token.length>=4&&token.length<=40){
+      const max=token.length>=8?2:1;
+      if(words.some(word=>Math.abs(word.length-token.length)<=max&&searchDistance(token,word)<=max))best=Math.max(best,weight/3);
+     }
+    });
+    if(!best)return null;
+    score+=best;
+   }
+   if(norm(service.title)===norm(query.trim()))score+=100;
+   return {service,score};
+  }).filter(Boolean).sort((a,b)=>b.score-a.score||a.service.id-b.service.id).map(hit=>hit.service);
+ }
+ const exact=rank(false);
+ return exact.length?{matches:exact,approximate:false}:{matches:rank(true),approximate:true};
+}
+const searchMatches=query=>findSearchResults(query).matches;
 const searchPanel=document.createElement('div');
 searchPanel.id='search-results';searchPanel.className='search-results';searchPanel.hidden=true;searchPanel.setAttribute('role','region');searchPanel.setAttribute('aria-label','Passende Dienstleistungen');
 $('#search-form').append(searchPanel);
 $('#search').setAttribute('aria-controls','search-results');$('#search').setAttribute('aria-expanded','false');
+$('#search').setAttribute('maxlength','160');
+$('#search').setAttribute('enterkeyhint','search');
+const clearSearch=document.createElement('button');
+clearSearch.type='button';clearSearch.className='search-clear';clearSearch.setAttribute('aria-label','Suchfeld leeren');clearSearch.innerHTML='<span aria-hidden="true">×</span>';clearSearch.hidden=true;
+$('#search').after(clearSearch);
+const searchAnnouncement=document.createElement('span');searchAnnouncement.className='sr-only';searchAnnouncement.setAttribute('role','status');searchAnnouncement.setAttribute('aria-live','polite');$('#search-form').append(searchAnnouncement);
+function highlightedTitle(title,query){
+ const tokens=searchTokens(query);const text=norm(title);let result='',plain='';
+ for(let i=0;i<title.length;){
+  const token=tokens.filter(t=>text.startsWith(t,i)).sort((a,b)=>b.length-a.length)[0];
+  if(token){result+=escapeHTML(plain)+'<mark>'+escapeHTML(title.slice(i,i+token.length))+'</mark>';plain='';i+=token.length}
+  else plain+=title[i++];
+ }
+ return result+escapeHTML(plain);
+}
 function hideSearchResults(){searchPanel.hidden=true;$('#search').setAttribute('aria-expanded','false')}
 function showSearchResults(){
- const query=$('#search').value.trim();if(!query){hideSearchResults();return}
- const matches=searchMatches(query);
- searchPanel.innerHTML=`<div class="search-results-heading" role="status">${matches.length?`${matches.length} passende ${matches.length===1?'Dienstleistung':'Dienstleistungen'}`:'Keine passende Dienstleistung gefunden'}</div>${matches.length?matches.map(s=>`<button type="button" class="search-result" data-search-service="${s.id}"><span><strong>${escapeHTML(s.title)}</strong><small>${escapeHTML(s.description)}</small></span><span aria-hidden="true">→</span></button>`).join(''):`<p class="search-empty">Versuchen Sie zum Beispiel «Auto», «Pass», «Steuern», «Umzug» oder «Hund».</p>`}`;
+ const query=$('#search').value.trim();clearSearch.hidden=!$('#search').value;
+ const {matches,approximate}=query?findSearchResults(query):{matches:[services[0],services[1],services[2],services[4]],approximate:false};
+ const heading=!query?'Schnellzugriff':matches.length?`${matches.length} ${approximate?'ähnliche':'passende'} ${matches.length===1?'Dienstleistung':'Dienstleistungen'}`:'Noch kein passendes Angebot';
+ searchAnnouncement.textContent=heading;
+ searchPanel.innerHTML=`<div class="search-results-heading"><span>${heading}</span><span class="search-key-hint">↑ ↓ auswählen · Enter öffnen</span></div>${approximate&&matches.length?'<p class="search-tip">Vielleicht meinen Sie eines dieser Angebote:</p>':''}${matches.length?matches.map(s=>`<button type="button" class="search-result" data-search-service="${s.id}"><span class="search-result-icon" aria-hidden="true">${topics[s.topic][1]}</span><span class="search-result-copy"><span class="search-result-topic">${escapeHTML(topics[s.topic][0])}</span><strong>${highlightedTitle(s.title,query)}</strong><small>${escapeHTML(s.description)}</small></span><span class="search-result-arrow" aria-hidden="true">→</span></button>`).join(''):`<div class="search-empty"><strong>Versuchen Sie einen kürzeren Begriff.</strong><p>Zum Beispiel «Pass» statt einer langen Beschreibung. Diese Themen helfen Ihnen weiter:</p><div class="search-alternatives">${['Wohnen','Hund','Steuern','Auto','Polizei','Bibliothek'].map(term=>`<button type="button" data-query="${term}">${term}</button>`).join('')}</div></div>`}<div class="search-results-footer">${matches.length?'Angebot auswählen und erfahren, was Sie dafür brauchen.':'Alle 31 Dienstleistungen können Sie auch nach Themen durchsehen.'}</div>`;
+ searchPanel.scrollTop=0;
  searchPanel.hidden=false;$('#search').setAttribute('aria-expanded','true');
 }
-searchPanel.onclick=e=>{const button=e.target.closest('[data-search-service]');if(!button)return;$('#search').focus({preventScroll:true});hideSearchResults();openService(services[+button.dataset.searchService])};
+clearSearch.onclick=()=>{$('#search').value='';$('#search').focus({preventScroll:true});showSearchResults()};
+searchPanel.onclick=e=>{
+ const suggestion=e.target.closest('[data-query]');if(suggestion){$('#search').value=suggestion.dataset.query;$('#search').focus({preventScroll:true});showSearchResults();return}
+ const button=e.target.closest('[data-search-service]');if(!button)return;$('#search').focus({preventScroll:true});hideSearchResults();openService(services[+button.dataset.searchService]);
+};
 $('#search-form').addEventListener('keydown',e=>{
- if(e.key==='Escape'){e.preventDefault();hideSearchResults();$('#search').focus({preventScroll:true});return}
+ if(e.key==='Escape'){e.preventDefault();$('#search').focus({preventScroll:true});hideSearchResults();return}
  if(e.key!=='ArrowDown'&&e.key!=='ArrowUp')return;
  if(searchPanel.hidden)showSearchResults();const buttons=[...searchPanel.querySelectorAll('[data-search-service]')];if(!buttons.length)return;
  e.preventDefault();const index=buttons.indexOf(document.activeElement);const next=e.key==='ArrowDown'?Math.min(index+1,buttons.length-1):index<=0?-1:index-1;
- (next<0?$('#search'):buttons[next]).focus({preventScroll:true});
+ const target=next<0?$('#search'):buttons[next];target.focus({preventScroll:true});
+ if(next>=0){
+  const panelRect=searchPanel.getBoundingClientRect(),rect=target.getBoundingClientRect();
+  if(rect.bottom>panelRect.bottom)searchPanel.scrollTop+=rect.bottom-panelRect.bottom;
+  else if(rect.top<panelRect.top)searchPanel.scrollTop-=panelRect.top-rect.top;
+ }
 });
-document.addEventListener('click',e=>{if(!$('#search-form').contains(e.target))hideSearchResults()});
+document.addEventListener('click',e=>{if(!e.composedPath().includes($('#search-form')))hideSearchResults()});
 $('#search-form').addEventListener('focusout',e=>{if(!$('#search-form').contains(e.relatedTarget))hideSearchResults()});
-$('#search').addEventListener('focus',()=>{if($('#search').value.trim())showSearchResults()});
+$('#search').addEventListener('focus',showSearchResults);
 function render(){
  let list=services.filter(s=>(state.topic===null||s.topic===state.topic)&&(state.filter==='all'||(state.filter==='demo'?['residence','dog','firstdog','dogoff'].includes(s.type):s.type==='external')));
  if($('#sort').value==='az')list.sort((a,b)=>a.title.localeCompare(b.title,'de-CH'));
