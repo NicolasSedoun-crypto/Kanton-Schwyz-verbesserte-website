@@ -44,9 +44,36 @@ $('#municipality').innerHTML+=municipalities.map(m=>`<option>${m}</option>`).joi
 let state={topic:null,filter:'all',limit:6};
 $('#topics').innerHTML=topics.map((t,i)=>`<button class="topic" data-topic="${i}" aria-pressed="false"><span class="topic-icon" aria-hidden="true">${t[1]}</span><span>${t[0]}</span></button>`).join('');
 const norm=s=>s.toLocaleLowerCase('de-CH').normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+function searchMatches(query){
+ const tokens=norm(query.trim()).split(/\s+/).filter(Boolean);
+ if(!tokens.length)return [];
+ const aliases={0:'wohnsitz wohnsitzbestatigung wohnsitzbescheinigung dokument',1:'tier tiere haustier hund hunde hundeanmeldung hunderegistrierung',5:'tier tiere haustier hund hunde ersthalter ersthundehalter hunderegistrierung',17:'tier tiere haustier hund hunde hundeabmeldung'};
+ return services.filter(s=>tokens.every(t=>norm(s.title+' '+s.description+' '+topics[s.topic][0]+' '+(aliases[s.id]||'')).includes(t)));
+}
+const searchPanel=document.createElement('div');
+searchPanel.id='search-results';searchPanel.className='search-results';searchPanel.hidden=true;searchPanel.setAttribute('role','region');searchPanel.setAttribute('aria-label','Passende Dienstleistungen');
+$('#search-form').append(searchPanel);
+$('#search').setAttribute('aria-controls','search-results');$('#search').setAttribute('aria-expanded','false');
+function hideSearchResults(){searchPanel.hidden=true;$('#search').setAttribute('aria-expanded','false')}
+function showSearchResults(){
+ const query=$('#search').value.trim();if(!query){hideSearchResults();return}
+ const matches=searchMatches(query);
+ searchPanel.innerHTML=`<div class="search-results-heading" role="status">${matches.length?`${matches.length} passende ${matches.length===1?'Dienstleistung':'Dienstleistungen'}`:'Keine passende Dienstleistung gefunden'}</div>${matches.length?matches.slice(0,8).map(s=>`<button type="button" class="search-result" data-search-service="${s.id}"><span><strong>${escapeHTML(s.title)}</strong><small>${escapeHTML(s.description)}</small></span><span aria-hidden="true">→</span></button>`).join(''):`<p class="search-empty">Versuchen Sie zum Beispiel «Hund», «Tier», «Wohnsitz» oder «Steuer».</p>`}${matches.length>8?'<p class="search-more">Die ersten 8 Treffer. Geben Sie einen genaueren Suchbegriff ein.</p>':''}`;
+ searchPanel.hidden=false;$('#search').setAttribute('aria-expanded','true');
+}
+searchPanel.onclick=e=>{const button=e.target.closest('[data-search-service]');if(!button)return;$('#search').focus({preventScroll:true});hideSearchResults();openService(services[+button.dataset.searchService])};
+$('#search-form').addEventListener('keydown',e=>{
+ if(e.key==='Escape'){e.preventDefault();hideSearchResults();$('#search').focus({preventScroll:true});return}
+ if(e.key!=='ArrowDown'&&e.key!=='ArrowUp')return;
+ if(searchPanel.hidden)showSearchResults();const buttons=[...searchPanel.querySelectorAll('[data-search-service]')];if(!buttons.length)return;
+ e.preventDefault();const index=buttons.indexOf(document.activeElement);const next=e.key==='ArrowDown'?Math.min(index+1,buttons.length-1):index<=0?-1:index-1;
+ (next<0?$('#search'):buttons[next]).focus({preventScroll:true});
+});
+document.addEventListener('click',e=>{if(!$('#search-form').contains(e.target))hideSearchResults()});
+$('#search-form').addEventListener('focusout',e=>{if(!$('#search-form').contains(e.relatedTarget))hideSearchResults()});
+$('#search').addEventListener('focus',()=>{if($('#search').value.trim())showSearchResults()});
 function render(){
- const query=norm($('#search').value.trim());
- let list=services.filter(s=>(state.topic===null||s.topic===state.topic)&&(state.filter==='all'||(state.filter==='demo'?['residence','dog','firstdog','dogoff'].includes(s.type):s.type==='external'))&&(!query||norm(s.title+' '+s.description+' '+topics[s.topic][0]).includes(query)));
+ let list=services.filter(s=>(state.topic===null||s.topic===state.topic)&&(state.filter==='all'||(state.filter==='demo'?['residence','dog','firstdog','dogoff'].includes(s.type):s.type==='external')));
  if($('#sort').value==='az')list.sort((a,b)=>a.title.localeCompare(b.title,'de-CH'));
  $('#results-title').textContent=state.topic===null?'Dienstleistungen im Überblick':topics[state.topic][0];
  $('#result-count').textContent=`${list.length} ${list.length===1?'Dienstleistung':'Dienstleistungen'}`;
@@ -57,9 +84,9 @@ function render(){
 }
 $('#topics').onclick=e=>{const b=e.target.closest('[data-topic]');if(!b)return;state.topic=state.topic===+b.dataset.topic?null:+b.dataset.topic;state.limit=6;render()};
 document.querySelectorAll('[data-filter]').forEach(b=>b.onclick=()=>{state.filter=b.dataset.filter;state.limit=6;render()});
-$('#search').oninput=()=>{state.limit=6;render()};
-$('#search-form').onsubmit=e=>{e.preventDefault();$('#dienstleistungen').scrollIntoView();render()};
-document.querySelectorAll('[data-search]').forEach(b=>b.onclick=()=>{$('#search').value=b.dataset.search;state.topic=null;state.filter='all';render();$('#dienstleistungen').scrollIntoView()});
+$('#search').oninput=showSearchResults;
+$('#search-form').onsubmit=e=>{e.preventDefault();showSearchResults()};
+document.querySelectorAll('[data-search]').forEach(b=>b.onclick=()=>{$('#search').value=b.dataset.search;$('#search').focus({preventScroll:true});showSearchResults()});
 $('#sort').onchange=render;
 $('#show-more').onclick=()=>{state.limit=services.length;render()};
 $('#reset').onclick=()=>{$('#search').value='';state={topic:null,filter:'all',limit:6};render()};
