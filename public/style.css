@@ -23,6 +23,11 @@
 @media(max-width:760px){.searchbox input{font-size:16px}.search-key-hint{display:none}.search-results{max-height:min(410px,48dvh)}.searchbox{gap:7px}.searchbox>button[type=submit]{font-size:12px}.searchbox>button[type=submit] span{display:none}}
 @media(max-width:430px){.search-result{padding:13px 12px;gap:10px}.search-result strong{font-size:13px}.search-result small{font-size:11px}.search-result-icon{width:28px;height:34px;font-size:18px}.searchbox>span{font-size:25px}.searchbox>button[type=submit]{padding:12px 9px}.search-results-footer{font-size:10px}}
 .service-intro h2{margin-top:14px!important}.service-intro>p{font-size:16px!important;line-height:1.7;color:var(--ink)!important}
+.resume-top{border:1px solid var(--red);border-radius:5px;background:var(--red);color:#fff;font-size:12px;font-weight:700;padding:10px 13px;white-space:nowrap;flex-shrink:0}
+.resume-top:hover{background:#ab0022;border-color:#ab0022}
+.resume-top[hidden]{display:none}
+@media(max-width:520px){.header.has-resume{height:118px;align-items:flex-start;padding-top:12px;position:relative}.header.has-resume .resume-top{position:absolute;right:25px;bottom:10px}.header.has-resume .account{margin-left:auto}}
+@media(max-width:430px){.header.has-resume .resume-top{right:20px}}
 .service-start{display:flex;flex-direction:column;align-items:start;gap:9px;margin:22px 0}.service-start small,.try-service small{font-size:11px;color:var(--muted);line-height:1.6;display:block}
 #dialog-content .service-start .primary,#dialog-content .service-end .primary{text-decoration:none;font-size:15px;line-height:1.5;padding:13px 20px}
 .easy-facts{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;padding:17px;background:#f4f6ef;border:1px solid #e0e5da;border-radius:7px;margin:22px 0}
