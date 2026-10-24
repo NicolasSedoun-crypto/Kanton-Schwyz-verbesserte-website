@@ -181,7 +181,14 @@ function render(){
 $('#topics').onclick=e=>{const b=e.target.closest('[data-topic]');if(!b)return;state.topic=state.topic===+b.dataset.topic?null:+b.dataset.topic;state.limit=6;render()};
 document.querySelectorAll('[data-filter]').forEach(b=>b.onclick=()=>{state.filter=b.dataset.filter;state.limit=6;render()});
 $('#search').oninput=showSearchResults;
-$('#search-form').onsubmit=e=>{e.preventDefault();showSearchResults()};
+$('#search-form').onsubmit=e=>{
+ e.preventDefault();
+ showSearchResults();
+ const first=searchPanel.querySelector('[data-search-service]');
+ if(first)first.focus({preventScroll:true});
+ else{searchPanel.tabIndex=-1;searchPanel.focus({preventScroll:true})}
+ searchPanel.scrollIntoView({block:'nearest',behavior:'smooth'});
+};
 document.querySelectorAll('[data-search]').forEach(b=>b.onclick=()=>{$('#search').value=b.dataset.search;$('#search').focus({preventScroll:true});showSearchResults()});
 $('#sort').onchange=render;
 $('#show-more').onclick=()=>{state.limit=services.length;render()};
