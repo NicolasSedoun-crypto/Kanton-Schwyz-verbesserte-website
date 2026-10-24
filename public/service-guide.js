@@ -18,9 +18,9 @@ const easyServices=[
  ['Spätere Zahlung beantragen','Sie möchten Ihre direkte Bundessteuer erst später bezahlen.', ['Ihre Steuerrechnung zum Nachschauen','Das gewünschte neue Zahlungsdatum','Eine kurze Erklärung, weshalb Sie mehr Zeit brauchen'], 'Das Amt entscheidet über Ihren Antrag und antwortet per E-Mail. Es fallen Verzugszinsen an.'],
  ['Fahrzeughalter abfragen','Sie möchten wissen, auf wen ein Fahrzeug eingelöst ist.', ['Die Nummer des Kontrollschilds','Den Kanton auf dem Kontrollschild'], 'Die Halterauskunft zeigt, ob eine Auskunft zu dieser Nummer möglich ist.'],
  ['Prüfungstermin verschieben','Der Termin für Ihre Fahrzeugprüfung passt nicht. Sie suchen einen anderen Termin.', ['Das Schreiben mit Ihrem Prüfungstermin','Die Fahrzeug- oder Terminnummer aus diesem Schreiben'], 'Im Terminangebot wählen Sie einen verfügbaren Ersatztermin und prüfen die Bedingungen.'],
- ['Feuerbewilligung beantragen','Sie planen ein Feuer und möchten prüfen lassen, ob Sie es durchführen dürfen.', ['Ort, Datum und Dauer des Feuers','Was Sie verbrennen möchten','Kontaktangaben der verantwortlichen Person'], 'Die zuständige Stelle erklärt die Bedingungen. Prüfen Sie auch aktuelle Feuerverbote. Starten Sie erst, wenn die nötige Bewilligung vorliegt.'],
+ ['Feuerbewilligung beantragen','Sie möchten natürliche Wald- oder Feldabfälle ausnahmsweise ausserhalb einer Anlage verbrennen.', ['Standort und gewünschtes Datum','Art der Wald- oder Feldabfälle','Warum Lagern oder Abtransport nicht möglich ist','Angaben zur behördlich angeordneten Rodung'], 'Das Amt für Landwirtschaft oder das Amt für Wald und Natur prüft das Gesuch und erteilt eine Bewilligung oder Ablehnung. Beginnen Sie erst nach einer Bewilligung.'],
  ['Heimatausweis bestellen','Sie wohnen zeitweise in einer anderen Gemeinde, zum Beispiel unter der Woche für ein Studium. Ihr Hauptwohnsitz bleibt bestehen.', ['Ihre Hauptwohnadresse und die Adresse am Aufenthaltsort','Den Grund und die Dauer Ihres Aufenthalts','Ihre persönlichen Angaben'], 'Die Gemeinde bearbeitet Ihre Bestellung und stellt Ihnen den Heimatausweis zu.'],
- ['Hund abmelden','Ihr Hund ist verstorben, lebt bei jemand anderem oder zieht mit Ihnen weg.', ['Ihre persönliche Nummer im Hunderegister AMICUS','Angaben zu Ihrem Hund sowie Grund und Datum der Abmeldung','Bei Übergabe: die AMICUS-Nummer der neuen Halterin oder des neuen Halters'], 'Nach der Meldung erhalten Sie eine Bestätigung. Die Angaben bei der Gemeinde und im Hunderegister werden aktualisiert.'],
+ ['Hund abmelden','Ihr Hund ist verstorben, wurde weitergegeben, ins Ausland abgegeben oder zieht mit Ihnen weg.', ['Ihre persönliche Nummer im Hunderegister AMICUS','Angaben zum Hund, zum Grund und zum Datum','Nur bei Übergabe: die AMICUS-Nummer der neuen Halterin oder des neuen Halters'], 'Melden Sie die Änderung innert 10 Tagen. Im amtlichen Angebot erhalten Sie danach eine Bestätigung; Gemeinde und AMICUS führen die Angaben nach.'],
  ['Bücher suchen','Sie suchen ein Buch oder andere Medien in der Kantonsbibliothek.', ['Einen Titel, ein Thema oder den Namen der Autorin oder des Autors','Für eine Reservation eventuell Ihre Bibliotheks-Zugangsdaten'], 'Im Katalog sehen Sie, wo das Medium steht und ob es verfügbar ist.'],
  ['Versteigerung öffnen','Sie möchten bei einer Versteigerung ein bestimmtes Kontrollschild kaufen.', ['Eine Idee, welche Nummer Sie suchen','Vor der Teilnahme: die Regeln und Kosten der Versteigerung lesen'], 'Das Auktionsangebot erklärt die Registrierung und das Bieten. Prüfen Sie die Bedingungen, bevor Sie ein Gebot abgeben.'],
  ['Verlust melden','Sie haben ein Kontrollschild verloren und brauchen Hilfe für den Ersatz.', ['Die Nummer des verlorenen Kontrollschilds','Angaben zu Ihrem Fahrzeug','Wann und wo Sie den Verlust bemerkt haben'], 'Das zuständige Angebot erklärt die Meldung und wie Sie Ersatz erhalten.'],
@@ -37,7 +37,7 @@ const easyServices=[
 ];
 const serviceFacts={
  0:['Kein Login nötig','Ab CHF 10','2–3 Arbeitstage'],1:['Kein Login nötig','Anmeldung kostenlos','2–3 Tage'],
- 2:['Kein Login nötig','Kostenlos','Vor Ablauf Ihrer Frist'],5:['Kein Login nötig','Kostenlos','2–3 Tage'],
+ 2:['Kein Login nötig','Kostenlos','Vor Ablauf Ihrer Frist'],5:['Kein Login nötig','Kostenlos','2–3 Tage'],15:['Kein Login nötig','Kostenlos','Frühestens nach 3 Arbeitstagen'],
  6:['Kein Login nötig','CHF 10 pro Person + evtl. Versand','2–3 Arbeitstage'],7:['Kein Login nötig','Kostenlos','Meist 2–4 Wochen'],
  8:['Kein Login nötig','CHF 20 + evtl. Versand','2–3 Arbeitstage'],11:['Kein Login nötig','Antrag kostenlos; Zinsen fallen an','Maximal 5 Tage'],
  12:['Kein Login nötig','Antrag kostenlos; Zinsen fallen an','Maximal 5 Tage'],16:['Kein Login nötig','CHF 20 oder 30 + evtl. Versand','2–3 Arbeitstage'],
@@ -49,26 +49,30 @@ const isExample=s=>s.type!=='external';
 const extraHints={
  0:'Einzelperson auf Deutsch: CHF 10. Andere Sprachen oder Familie: CHF 20. Versand und eine nötige Archivrecherche können zusätzlich kosten.',
  1:'Melden Sie Ihren Hund innerhalb von 10 Tagen an. Die jährliche Hundesteuer kommt zur kostenlosen Anmeldung hinzu.',
- 2:'Die PID-Nummer ist Ihre persönliche Nummer bei der Steuerverwaltung. Für den Antrag müssen Sie keine Dokumente hochladen.',
+ 2:'Die PID-Nummer steht oben rechts auf Ihrer Steuererklärung. Bei Paaren geben Sie das Geburtsdatum der als P1 bezeichneten Person an. Beantragen Sie die Verlängerung vor Ablauf Ihrer bisherigen Frist. Wird der Antrag abgelehnt, müssen Sie die Steuererklärung innerhalb der noch laufenden Frist einreichen. Es sind keine Unterlagen nötig.',
  5:'AMICUS ist das nationale Hunderegister. Die Personen-ID ist Ihre persönliche Nummer als Hundehalterin oder Hundehalter.',
  7:'Das Projekt muss gemeinnützig sein und einen Bezug zum Kanton Schwyz haben. Eine eigene Beteiligung an den Kosten wird vorausgesetzt.',
  11:'Laut offizieller Seite müssen Sie keine Unterlagen hochladen. Die Rechnung hilft Ihnen beim Ausfüllen.',
  12:'Laut offizieller Seite müssen Sie keine Unterlagen hochladen. Eine Verlängerung ist bei Bewilligung höchstens um 3 Monate möglich.',
  16:'CHF 20 für ein Jahr; CHF 30 für höchstens zwei Jahre. Mögliche Versandkosten kommen hinzu.',
- 17:'Melden Sie die Änderung innerhalb von 10 Tagen. Bei einer Übergabe brauchen Sie die Personen-ID der neuen Halterin oder des neuen Halters.',
+ 15:'Nur in Ausnahmefällen: Grüngut im Siedlungsgebiet darf nicht verbrannt werden. Ausserhalb kommt eine Bewilligung in Betracht, wenn Lagern und Abtransport nicht möglich sind und eine behördlich angeordnete Rodung vorliegt. Der früheste Beginn liegt 3 Arbeitstage nach dem Gesuch; die Bewilligung gilt höchstens 30 Tage. Prüfen Sie zusätzlich aktuelle Feuerverbote.',
+ 17:'Kein Login und keine Gebühr für die Abmeldung. Melden Sie die Änderung innert 10 Tagen. Nur bei Übergabe brauchen Sie die Personen-ID der neuen Halterin oder des neuen Halters. Tod, Übergabe und Abgabe ins Ausland können Sie laut amtlicher Seite auch selbst in AMICUS oder mit der Tierarztpraxis melden.',
  25:'Der Bus hat 9 Plätze einschliesslich Fahrerin oder Fahrer. Er kann höchstens 7 Tage genutzt werden.'
 };
 detail=function(s){
  wizardOpen=false;current=s;
  const [action,summary,needs,next]=easyServices[s.id],facts=serviceFacts[s.id];
  const login=facts?facts[0]:'Das Angebot erklärt, ob ein Login nötig ist.';
+ const importantFirst=[2,15,17].includes(s.id);
  show(`<div class="service-intro"><span class="tag">${escapeHTML(topics[s.topic][0])}</span><h2 id="dialog-title">${escapeHTML(s.title)}</h2><p>${escapeHTML(summary)}</p></div>
+ ${importantFirst?`<aside class="notice"><strong>Vor dem Start wichtig</strong><p>${escapeHTML(extraHints[s.id])}</p></aside>`:''}
+ ${s.id===30?serviceHelp(s):''}
  <div class="service-start">${isExample(s)?`<button class="primary" type="button" id="start-demo">${escapeHTML(action)} →</button><small>Das Formular öffnet sich hier auf unserer Website. Mit Konto können Sie später fortsetzen.</small>`:`<a class="primary" href="${s.url}" target="_blank" rel="noopener">${escapeHTML(action)} <span aria-hidden="true">↗</span></a><small>Öffnet das zuständige Fachangebot in einem neuen Tab.</small>`}</div>
- <div class="easy-facts"><div><span>Benutzerkonto nötig?</span><strong>${escapeHTML(login)}</strong></div><div><span>Kosten</span><strong>${escapeHTML(facts?.[1]||'Im offiziellen Angebot nachsehen')}</strong></div><div><span>${s.id===2?'Einreichungsfrist':'Bearbeitungszeit'}</span><strong>${escapeHTML(facts?.[2]||'Im offiziellen Angebot nachsehen')}</strong></div></div>
- ${serviceHelp(s)}
+ <div class="easy-facts"><div><span>Benutzerkonto nötig?</span><strong>${escapeHTML(login)}</strong></div><div><span>Kosten</span><strong>${escapeHTML(facts?.[1]||'Im offiziellen Angebot nachsehen')}</strong></div><div><span>${s.id===2?'Einreichungsfrist':s.id===15?'Frühester Beginn':'Bearbeitungszeit'}</span><strong>${escapeHTML(facts?.[2]||'Im offiziellen Angebot nachsehen')}</strong></div></div>
+ ${s.id===30?'':serviceHelp(s)}
  ${s.type==='dog'?'<aside class="first-dog"><strong>Ist das Ihr erster Hund?</strong><p>Ohne persönliche AMICUS-Nummer registrieren Sie sich zuerst als Hundehalterin oder Hundehalter.</p><button class="text-link" id="first-dog-help">Zuerst als Hundehalter registrieren →</button></aside>':''}
  <section class="easy-section"><h3><span aria-hidden="true">1</span> Das legen Sie bereit</h3><p>Damit geht das Ausfüllen einfacher:</p><ul class="easy-checklist">${needs.map(n=>`<li><span aria-hidden="true">✓</span>${escapeHTML(n)}</li>`).join('')}</ul><p class="easy-source">Diese Liste hilft bei der Vorbereitung. Welche Angaben und Unterlagen Pflicht sind, steht im offiziellen Formular.</p></section>
- ${extraHints[s.id]?`<details class="easy-detail"><summary>Gut zu wissen</summary><p>${escapeHTML(extraHints[s.id])}</p></details>`:''}
+ ${extraHints[s.id]&&!importantFirst?`<details class="easy-detail"><summary>Gut zu wissen</summary><p>${escapeHTML(extraHints[s.id])}</p></details>`:''}
  <section class="easy-section"><h3><span aria-hidden="true">2</span> So starten Sie</h3><p>${isExample(s)?`Klicken Sie auf «${escapeHTML(action)}». Der Beispielablauf öffnet sich hier auf dieser Website. Verwenden Sie nur Testdaten.`:`Klicken Sie auf «${escapeHTML(action)}». Sie werden zum zuständigen Fachangebot weitergeleitet.`}</p></section>
  <section class="easy-section"><h3><span aria-hidden="true">3</span> So geht es weiter</h3><p>${isExample(s)?'Bei einem echten Antrag: ':''}${escapeHTML(next)}</p></section>
  ${isExample(s)?'<p class="easy-source">Dieses Formular ist ein UX-Prototyp. Es übermittelt keinen Antrag an eine Behörde.</p>':''}
