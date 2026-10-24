@@ -6,7 +6,7 @@ Verbesserter, responsiver Onlineschalter auf Grundlage der öffentlichen Origina
 
 **Ohne Download ausprobieren:** [Online-Demo öffnen](https://schwyz-onlineschalter-neu.toastyhill32.chatgpt.site/).
 
-**Windows:** ZIP entpacken und im Ordner mit `package.json` `start.bat` doppelklicken. Node.js 22.13 oder neuer muss installiert sein. Beim ersten Start werden die nötigen Pakete und die lokale Datenbank automatisch eingerichtet; danach öffnet sich die Website im Browser. Das Fenster während der Nutzung offen lassen.
+**Windows:** ZIP entpacken und im Ordner mit `package.json` `start.bat` doppelklicken. Eine vorhandene Node.js-Installation ist nicht nötig: Falls sie fehlt, lädt der Starter beim ersten Mal eine geprüfte portable Version in den Projektordner. Dafür und für die Pakete ist beim ersten Start Internet nötig; es kann einige Minuten dauern. Danach öffnet sich die Website im Browser. Das Fenster während der Nutzung offen lassen.
 
 Für die manuelle Entwicklung startet `npm run dev -- --port 4185` die Website. Für lokale Tests zuerst `/signin-with-chatgpt?return_to=/` öffnen; die mitgelieferte lokale Identität gilt nur in der Entwicklungsumgebung.
 
