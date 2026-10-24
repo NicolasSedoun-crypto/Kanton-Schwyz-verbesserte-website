@@ -37,7 +37,7 @@ const easyServices=[
 ];
 const serviceFacts={
  0:['Kein Login nötig','Ab CHF 10','2–3 Arbeitstage'],1:['Kein Login nötig','Anmeldung kostenlos','2–3 Tage'],
- 2:['Kein Login nötig','Kostenlos','Vor Ablauf Ihrer Frist'],5:['Kein Login nötig','Kostenlos','Im Angebot nachsehen'],
+ 2:['Kein Login nötig','Kostenlos','Vor Ablauf Ihrer Frist'],5:['Kein Login nötig','Kostenlos','2–3 Tage'],
  6:['Kein Login nötig','CHF 10 pro Person + evtl. Versand','2–3 Arbeitstage'],7:['Kein Login nötig','Kostenlos','Meist 2–4 Wochen'],
  8:['Kein Login nötig','CHF 20 + evtl. Versand','2–3 Arbeitstage'],11:['Kein Login nötig','Antrag kostenlos; Zinsen fallen an','Maximal 5 Tage'],
  12:['Kein Login nötig','Antrag kostenlos; Zinsen fallen an','Maximal 5 Tage'],16:['Kein Login nötig','CHF 20 oder 30 + evtl. Versand','2–3 Arbeitstage'],
@@ -45,7 +45,7 @@ const serviceFacts={
  29:['Login im offiziellen Angebot','Antrag kostenlos','Im Angebot nachsehen'],30:['Login im offiziellen Angebot','Verzugszinsen','Maximal 5 Arbeitstage']
 };
 services.forEach((service,i)=>{service.url=`https://onlineschalter.sz.ch/Pages/Services/Detail.aspx?id=${officialServiceIds[i]}`;service.description=easyServices[i][1]});
-const isExample=s=>['residence','dog','firstdog','dogoff'].includes(s.type);
+const isExample=s=>['residence','dog','firstdog','dogoff','rates'].includes(s.type);
 const extraHints={
  0:'Einzelperson auf Deutsch: CHF 10. Andere Sprachen oder Familie: CHF 20. Versand und eine nötige Archivrecherche können zusätzlich kosten.',
  1:'Melden Sie Ihren Hund innerhalb von 10 Tagen an. Die jährliche Hundesteuer kommt zur kostenlosen Anmeldung hinzu.',
@@ -64,14 +64,15 @@ detail=function(s){
  const login=facts?facts[0]:'Das Angebot erklärt, ob ein Login nötig ist.';
  show(`<div class="service-intro"><span class="tag">${escapeHTML(topics[s.topic][0])}</span><h2 id="dialog-title">${escapeHTML(s.title)}</h2><p>${escapeHTML(summary)}</p></div>
  <div class="service-start"><a class="primary" href="${s.url}" target="_blank" rel="noopener">${escapeHTML(action)} <span aria-hidden="true">↗</span></a><small>Öffnet die passende offizielle Dienstleistung in einem neuen Tab.</small></div>
- <div class="easy-facts"><div><span>Anmeldung</span><strong>${escapeHTML(login)}</strong></div><div><span>Kosten</span><strong>${escapeHTML(facts?.[1]||'Im offiziellen Angebot nachsehen')}</strong></div><div><span>Dauer / Frist</span><strong>${escapeHTML(facts?.[2]||'Im offiziellen Angebot nachsehen')}</strong></div></div>
+ <div class="easy-facts"><div><span>Benutzerkonto nötig?</span><strong>${escapeHTML(login)}</strong></div><div><span>Kosten</span><strong>${escapeHTML(facts?.[1]||'Im offiziellen Angebot nachsehen')}</strong></div><div><span>${s.id===2?'Einreichungsfrist':'Bearbeitungszeit'}</span><strong>${escapeHTML(facts?.[2]||'Im offiziellen Angebot nachsehen')}</strong></div></div>
+ ${serviceHelp(s)}
  ${s.type==='dog'?'<aside class="first-dog"><strong>Ist das Ihr erster Hund?</strong><p>Ohne persönliche AMICUS-Nummer registrieren Sie sich zuerst als Hundehalterin oder Hundehalter.</p><button class="text-link" id="first-dog-help">Zuerst als Hundehalter registrieren →</button></aside>':''}
  <section class="easy-section"><h3><span aria-hidden="true">1</span> Das legen Sie bereit</h3><p>Damit geht das Ausfüllen einfacher:</p><ul class="easy-checklist">${needs.map(n=>`<li><span aria-hidden="true">✓</span>${escapeHTML(n)}</li>`).join('')}</ul><p class="easy-source">Diese Liste hilft bei der Vorbereitung. Welche Angaben und Unterlagen Pflicht sind, steht im offiziellen Formular.</p></section>
  ${extraHints[s.id]?`<details class="easy-detail"><summary>Gut zu wissen</summary><p>${escapeHTML(extraHints[s.id])}</p></details>`:''}
  <section class="easy-section"><h3><span aria-hidden="true">2</span> So starten Sie</h3><p>Klicken Sie auf «${escapeHTML(action)}». Folgen Sie dort den Schritten.${facts?.[0]==='Login im offiziellen Angebot'?' Melden Sie sich zuerst im offiziellen Angebot an.':s.type==='external'?' Sie werden zum zuständigen Angebot weitergeleitet.':' Auf der Detailseite geht es über «Zum Formular» oder «Zum nächsten Schritt» weiter.'}</p></section>
  <section class="easy-section"><h3><span aria-hidden="true">3</span> So geht es weiter</h3><p>${escapeHTML(next)}</p></section>
  ${isExample(s)?`<aside class="try-service"><strong>Erst einmal ausprobieren?</strong><p>Das Beispiel-Formular führt Sie Schritt für Schritt durch das Anliegen. Mit Ihrem Konto können Sie den Stand speichern.</p><button class="secondary" id="start-demo">${escapeHTML(action)} – ausprobieren →</button><small>Nur Testdaten verwenden. Hier wird kein echter Antrag eingereicht.</small></aside>`:''}
- <div class="service-end"><a class="primary" href="${s.url}" target="_blank" rel="noopener">${escapeHTML(action)} ↗</a><button class="text-link" id="service-back">Zurück zur Übersicht</button></div>
+ <div class="service-end"><button class="text-link" id="service-back">Zurück zur Übersicht</button></div>
  <p class="easy-source"><a href="${s.url}" target="_blank" rel="noopener">Offizielle Informationen zu dieser Dienstleistung ↗</a></p>`,'SCHRITT FÜR SCHRITT');
  $('#service-back').onclick=()=>close();
  if($('#first-dog-help'))$('#first-dog-help').onclick=()=>detail(services[5]);
