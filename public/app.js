@@ -174,7 +174,10 @@ function render(){
  $('#results-title').textContent=state.topic===null?'Dienstleistungen im Überblick':topics[state.topic][0];
  $('#result-count').textContent=`${list.length} ${list.length===1?'Dienstleistung':'Dienstleistungen'}`;
  $('#services').innerHTML=list.slice(0,state.limit).map(s=>`<button class="service-card" data-service="${s.id}"><div class="card-top"><span class="card-icon" aria-hidden="true">${topics[s.topic][1]}</span><span class="tag ${s.type==='external'?'external':''}">${['residence','dog','firstdog'].includes(s.type)?'Ohne Konto':s.type==='external'?'Externe Seite ↗':s.type==='dogoff'?'Demo-Ablauf':'Offizielles Angebot ↗'}</span></div><h3>${s.title}</h3><p>${s.description}</p><div class="card-foot"><span>${s.meta}</span><b aria-hidden="true">${s.type==='external'?'↗':'→'}</b></div></button>`).join('');
- $('#empty').hidden=!!list.length;$('#show-more').hidden=list.length<=state.limit;
+ $('#empty').hidden=!!list.length;
+ const showingAll=state.topic===null&&state.filter==='all';
+ $('#show-more').hidden=showingAll&&list.length<=state.limit;
+ $('#show-more').innerHTML=`Alle ${services.length} Dienstleistungen anzeigen <span aria-hidden="true">↓</span>`;
  document.querySelectorAll('[data-topic]').forEach(b=>{const active=+b.dataset.topic===state.topic;b.classList.toggle('selected',active);b.setAttribute('aria-pressed',active)});
  document.querySelectorAll('[data-filter]').forEach(b=>{const active=b.dataset.filter===state.filter;b.classList.toggle('selected',active);b.setAttribute('aria-pressed',active)});
 }
@@ -187,7 +190,7 @@ $('#topics').onclick=e=>{
  const heading=$('#results-title');heading.tabIndex=-1;heading.focus({preventScroll:true});
  $('#all-services').scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});
 };
-document.querySelectorAll('[data-filter]').forEach(b=>b.onclick=()=>{state.filter=b.dataset.filter;state.limit=6;render()});
+document.querySelectorAll('[data-filter]').forEach(b=>b.onclick=()=>{state.filter=b.dataset.filter;state.limit=state.filter==='all'&&state.topic===null?6:services.length;render()});
 $('#search').oninput=showSearchResults;
 $('#search-form').onsubmit=e=>{
  e.preventDefault();
@@ -199,7 +202,9 @@ $('#search-form').onsubmit=e=>{
 };
 document.querySelectorAll('[data-search]').forEach(b=>b.onclick=()=>{$('#search').value=b.dataset.search;$('#search').focus({preventScroll:true});showSearchResults()});
 $('#sort').onchange=render;
-$('#show-more').onclick=()=>{state.limit=services.length;render()};
+function showAllServices(){state={topic:null,filter:'all',limit:services.length};render()}
+$('#show-more').onclick=showAllServices;
+document.querySelector('.section-top .text-link').onclick=()=>showAllServices();
 $('#reset').onclick=()=>{$('#search').value='';state={topic:null,filter:'all',limit:6};render()};
 $('#municipality').onchange=()=>{$('#municipality-note').textContent=$('#municipality').value?`${$('#municipality').value} gewählt. Die Teilnahme ist pro Angebot im offiziellen Formular zu prüfen.`:'Die Verfügbarkeit unterscheidet sich je nach Dienstleistung.'};
 const dialog=$('#dialog');let trigger=null;let current=null;let step=0;let answers={};
