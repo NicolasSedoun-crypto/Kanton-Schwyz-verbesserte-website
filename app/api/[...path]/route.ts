@@ -9,7 +9,7 @@ function equal(a:string,b:string){if(a.length!==b.length)return false;let diff=0
 function json(body:unknown,status=200,cookie?:string){const h=new Headers({'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});if(cookie)h.set('Set-Cookie',cookie);return new Response(JSON.stringify(body),{status,headers:h});}
 function cookie(req:Request,token:string,age=60*60*24*7){return `sz_session=${token}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${age}${new URL(req.url).protocol==='https:'?'; Secure':''}`;}
 const profileKeys=['vorname','nachname','adresse','plz','ort','email','telefon','gemeinde'];
-const answerKeys=[...profileKeys,'dokument','sprache','zweck','hund','chip','amicus','ereignis','grund','neuehalter','neuadresse','testhinweis','rechnung','betrag','rate','beginn','begruendung'];
+const answerKeys=[...profileKeys,'dokument','sprache','zweck','hund','chip','amicus','ereignis','grund','neuehalter','neuadresse','testhinweis','rechnung','betrag','rate','beginn','begruendung','steuerjahr','pid','geburtsdatum','neuefrist','gesuchteperson','gesuchtegrund','zusatzangaben','projekttitel','projektziel','projektbetrag','zeitraum','steuerreferenz','offenerbetrag','ratenvorschlag','wunschdatum','feuerort','feuerdatum','material','aufenthaltsadresse','aufenthaltsbeginn','aufenthaltsende','aufenthaltsgrund','gruppe','fahrtdatum','fahrtziel','fahrtzweck','ersatzjahr','dienstnachweis','erklaerung'];
 function clean(input:unknown,keys:string[]){const result:Record<string,string>={};if(!input||typeof input!=='object'||Array.isArray(input))return result;for(const key of keys){const value=(input as Record<string,unknown>)[key];if(typeof value==='string'){if(value.length>500)throw Error('Feld zu lang.');result[key]=value.trim();}}return result;}
 async function handler(req:Request){
  const identity=await getChatGPTUser();if(!identity)return json({error:'Bitte zuerst den privaten Zugang mit ChatGPT öffnen.'},401);
@@ -48,7 +48,7 @@ async function handler(req:Request){
  if(path==='profile'&&req.method==='PUT'){const profile=clean(data.profile,profileKeys);await db.prepare('UPDATE accounts SET profile=? WHERE id=? AND owner=?').bind(JSON.stringify(profile),account.id,owner).run();return json({profile});}
  if(path==='drafts'&&req.method==='GET'){const result=await db.prepare('SELECT id,service,step,answers,updated,status FROM drafts WHERE account_id=? ORDER BY updated DESC').bind(account.id).all();return json({drafts:result.results.map((r:any)=>({...r,answers:JSON.parse(r.answers)}))});}
  if(path==='drafts'&&req.method==='PUT'){
-  if(![0,1,5,17,30].includes(data.service)||!Number.isInteger(data.step)||data.step<0||data.step>3)return json({error:'Ungültiger Entwurf.'},400);
+  if(![0,1,2,5,6,7,8,11,12,15,16,17,25,29,30].includes(data.service)||!Number.isInteger(data.step)||data.step<0||data.step>3)return json({error:'Ungültiger Entwurf.'},400);
   const answers=clean(data.answers,answerKeys);const id=crypto.randomUUID();const status=data.status==='complete'?'complete':'draft';
   await db.prepare('INSERT INTO drafts(id,account_id,service,step,answers,updated,status) VALUES(?,?,?,?,?,?,?) ON CONFLICT(account_id,service) DO UPDATE SET step=excluded.step,answers=excluded.answers,updated=excluded.updated,status=excluded.status').bind(id,account.id,data.service,data.step,JSON.stringify(answers),now,status).run();return json({saved:true,updated:now});
  }

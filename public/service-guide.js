@@ -45,7 +45,7 @@ const serviceFacts={
  29:['Login im offiziellen Angebot','Antrag kostenlos','Im Angebot nachsehen'],30:['Login im offiziellen Angebot','Verzugszinsen','Maximal 5 Arbeitstage']
 };
 services.forEach((service,i)=>{service.url=`https://onlineschalter.sz.ch/Pages/Services/Detail.aspx?id=${officialServiceIds[i]}`;service.description=easyServices[i][1]});
-const isExample=s=>['residence','dog','firstdog','dogoff','rates'].includes(s.type);
+const isExample=s=>s.type!=='external';
 const extraHints={
  0:'Einzelperson auf Deutsch: CHF 10. Andere Sprachen oder Familie: CHF 20. Versand und eine nötige Archivrecherche können zusätzlich kosten.',
  1:'Melden Sie Ihren Hund innerhalb von 10 Tagen an. Die jährliche Hundesteuer kommt zur kostenlosen Anmeldung hinzu.',
@@ -63,15 +63,15 @@ detail=function(s){
  const [action,summary,needs,next]=easyServices[s.id],facts=serviceFacts[s.id];
  const login=facts?facts[0]:'Das Angebot erklärt, ob ein Login nötig ist.';
  show(`<div class="service-intro"><span class="tag">${escapeHTML(topics[s.topic][0])}</span><h2 id="dialog-title">${escapeHTML(s.title)}</h2><p>${escapeHTML(summary)}</p></div>
- <div class="service-start"><a class="primary" href="${s.url}" target="_blank" rel="noopener">${escapeHTML(action)} <span aria-hidden="true">↗</span></a><small>Öffnet die passende offizielle Dienstleistung in einem neuen Tab.</small></div>
+ <div class="service-start">${isExample(s)?`<button class="primary" type="button" id="start-demo">${escapeHTML(action)} →</button><small>Das Formular öffnet sich hier auf unserer Website. Mit Konto können Sie später fortsetzen.</small>`:`<a class="primary" href="${s.url}" target="_blank" rel="noopener">${escapeHTML(action)} <span aria-hidden="true">↗</span></a><small>Öffnet das zuständige Fachangebot in einem neuen Tab.</small>`}</div>
  <div class="easy-facts"><div><span>Benutzerkonto nötig?</span><strong>${escapeHTML(login)}</strong></div><div><span>Kosten</span><strong>${escapeHTML(facts?.[1]||'Im offiziellen Angebot nachsehen')}</strong></div><div><span>${s.id===2?'Einreichungsfrist':'Bearbeitungszeit'}</span><strong>${escapeHTML(facts?.[2]||'Im offiziellen Angebot nachsehen')}</strong></div></div>
  ${serviceHelp(s)}
  ${s.type==='dog'?'<aside class="first-dog"><strong>Ist das Ihr erster Hund?</strong><p>Ohne persönliche AMICUS-Nummer registrieren Sie sich zuerst als Hundehalterin oder Hundehalter.</p><button class="text-link" id="first-dog-help">Zuerst als Hundehalter registrieren →</button></aside>':''}
  <section class="easy-section"><h3><span aria-hidden="true">1</span> Das legen Sie bereit</h3><p>Damit geht das Ausfüllen einfacher:</p><ul class="easy-checklist">${needs.map(n=>`<li><span aria-hidden="true">✓</span>${escapeHTML(n)}</li>`).join('')}</ul><p class="easy-source">Diese Liste hilft bei der Vorbereitung. Welche Angaben und Unterlagen Pflicht sind, steht im offiziellen Formular.</p></section>
  ${extraHints[s.id]?`<details class="easy-detail"><summary>Gut zu wissen</summary><p>${escapeHTML(extraHints[s.id])}</p></details>`:''}
- <section class="easy-section"><h3><span aria-hidden="true">2</span> So starten Sie</h3><p>Klicken Sie auf «${escapeHTML(action)}». Folgen Sie dort den Schritten.${facts?.[0]==='Login im offiziellen Angebot'?' Melden Sie sich zuerst im offiziellen Angebot an.':s.type==='external'?' Sie werden zum zuständigen Angebot weitergeleitet.':' Auf der Detailseite geht es über «Zum Formular» oder «Zum nächsten Schritt» weiter.'}</p></section>
- <section class="easy-section"><h3><span aria-hidden="true">3</span> So geht es weiter</h3><p>${escapeHTML(next)}</p></section>
- ${isExample(s)?`<aside class="try-service"><strong>Erst einmal ausprobieren?</strong><p>Das Beispiel-Formular führt Sie Schritt für Schritt durch das Anliegen. Mit Ihrem Konto können Sie den Stand speichern.</p><button class="secondary" id="start-demo">${escapeHTML(action)} – ausprobieren →</button><small>Nur Testdaten verwenden. Hier wird kein echter Antrag eingereicht.</small></aside>`:''}
+ <section class="easy-section"><h3><span aria-hidden="true">2</span> So starten Sie</h3><p>${isExample(s)?`Klicken Sie auf «${escapeHTML(action)}». Der Beispielablauf öffnet sich hier auf dieser Website. Verwenden Sie nur Testdaten.`:`Klicken Sie auf «${escapeHTML(action)}». Sie werden zum zuständigen Fachangebot weitergeleitet.`}</p></section>
+ <section class="easy-section"><h3><span aria-hidden="true">3</span> So geht es weiter</h3><p>${isExample(s)?'Bei einem echten Antrag: ':''}${escapeHTML(next)}</p></section>
+ ${isExample(s)?'<p class="easy-source">Dieses Formular ist ein UX-Prototyp. Es übermittelt keinen Antrag an eine Behörde.</p>':''}
  <div class="service-end"><button class="text-link" id="service-back">Zurück zur Übersicht</button></div>
  <p class="easy-source"><a href="${s.url}" target="_blank" rel="noopener">Offizielle Informationen zu dieser Dienstleistung ↗</a></p>`,'SCHRITT FÜR SCHRITT');
  $('#service-back').onclick=()=>close();
@@ -82,7 +82,7 @@ openService=function(s){answers={gemeinde:$('#municipality').value};detail(s)};
 const renderServiceCards=render;
 render=function(){renderServiceCards();document.querySelectorAll('[data-service]').forEach(card=>{
  const s=services[+card.dataset.service];
- card.querySelector('.tag').textContent=isExample(s)?'Mit Beispiel-Formular':'Schritt für Schritt';
+ card.querySelector('.tag').textContent=isExample(s)?'Auf dieser Website':'Externes Fachangebot ↗';
  card.querySelector('.card-foot').innerHTML=`<span>${escapeHTML(easyServices[s.id][0])}</span><b aria-hidden="true">→</b>`;
 });};
 $('#sort').onchange=()=>render();
