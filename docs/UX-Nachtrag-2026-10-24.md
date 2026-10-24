@@ -38,3 +38,13 @@ Die bestehende Präsentation kann in Minute 2 bis 3 die vier zusätzlichen Proze
 4. Amtliche Redaktion und zuständige Ämter um Prüfung der Formulierungen, Feuerbedingungen, Gemeindeabdeckung und Fristen bitten. Bis dahin bleibt der Prototyp eine unverbindliche Demo.
 
 Für die Vorführung ausschliesslich erfundene Testdaten verwenden. Die lokalen Screenshots liegen neben dem ergänzten Raster im Ordner `Screenshot/`.
+
+## Ergänzung: Suche und Kontoansicht (PP-026 bis PP-028)
+
+| ID | Beobachtung im Prototyp | Änderung |
+| --- | --- | --- |
+| PP-026 · Suche mit Enter | Nach Eingabe von «Tier» markierte das erste Enter nur den ersten Treffer. Ein zweites Enter war zum Öffnen nötig, obwohl der Hinweis «Enter öffnen» versprach. | Das erste Enter öffnet bei einer nichtleeren Suche den ersten passenden Treffer. Ohne Treffer bleiben die Suchhinweise sichtbar. |
+| PP-027 · Alle Dienstleistungen | Nach «Alle 31 Dienstleistungen anzeigen» blieb ein alter Suchbegriff im Suchfeld, obwohl der Katalog wieder alle Angebote zeigte. | Der Button setzt Suchfeld und Suchergebnisanzeige zurück. |
+| PP-028 · Gesendete Beispiele | Nach Abschluss zeigte das Konto nur den Titel und «Demo abgeschlossen»; die eingegebenen Testangaben waren nicht mehr einsehbar. | Abgeschlossene Beispiele stehen im Konto unter «Gesendete Beispiele» mit ihren gespeicherten Angaben und dem simulierten Status «In Bearbeitung (Demo)». Der Abschluss bietet einen direkten Weg dorthin. |
+
+Der Status bei PP-028 ist ausschliesslich eine Darstellung für den UX-Prototyp. Es erfolgt keine amtliche Einreichung oder Bearbeitung. Pro Dienstleistung speichert dieses Beispielkonto weiterhin nur den jüngsten Stand; «Neu beginnen» ersetzt ihn nach einem sichtbaren Hinweis.

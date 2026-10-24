@@ -196,16 +196,27 @@ $('#search-form').onsubmit=e=>{
  e.preventDefault();
  showSearchResults();
  const first=searchPanel.querySelector('[data-search-service]');
- if(first)first.focus({preventScroll:true});
- else{searchPanel.tabIndex=-1;searchPanel.focus({preventScroll:true})}
+ if($('#search').value.trim()&&first){
+  hideSearchResults();
+  openService(services[+first.dataset.searchService]);
+  return;
+ }
+ searchPanel.tabIndex=-1;
+ searchPanel.focus({preventScroll:true});
  searchPanel.scrollIntoView({block:'nearest',behavior:'smooth'});
 };
 document.querySelectorAll('[data-search]').forEach(b=>b.onclick=()=>{$('#search').value=b.dataset.search;$('#search').focus({preventScroll:true});showSearchResults()});
 $('#sort').onchange=render;
-function showAllServices(){state={topic:null,filter:'all',limit:services.length};render()}
+function resetSearch(){
+ $('#search').value='';
+ clearSearch.hidden=true;
+ hideSearchResults();
+ searchAnnouncement.textContent='';
+}
+function showAllServices(){resetSearch();state={topic:null,filter:'all',limit:services.length};render()}
 $('#show-more').onclick=showAllServices;
 document.querySelector('.section-top .text-link').onclick=()=>showAllServices();
-$('#reset').onclick=()=>{$('#search').value='';state={topic:null,filter:'all',limit:6};render()};
+$('#reset').onclick=()=>{resetSearch();state={topic:null,filter:'all',limit:6};render()};
 $('#municipality').onchange=()=>{$('#municipality-note').textContent=$('#municipality').value?`${$('#municipality').value} gewählt. Die Teilnahme ist pro Angebot im offiziellen Formular zu prüfen.`:'Die Verfügbarkeit unterscheidet sich je nach Dienstleistung.'};
 const dialog=$('#dialog');let trigger=null;let current=null;let step=0;let answers={};
 function show(content,kicker='DIENSTLEISTUNG'){if(!dialog.open)trigger=document.activeElement;$('#dialog-kicker').textContent=kicker;$('#dialog-content').innerHTML=content;if(!dialog.open)dialog.showModal();dialog.scrollTop=0;}

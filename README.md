@@ -1,6 +1,6 @@
 # Onlineschalter Schwyz – UX-Prototyp
 
-Verbesserter, responsiver Onlineschalter auf Grundlage der öffentlichen Originalseite und des bereitgestellten Pain-Point-Rasters. Vier weitere, am 24.10.2026 geprüfte Beobachtungen sind als PP-022 bis PP-025 im [UX-Nachtrag](docs/UX-Nachtrag-2026-10-24.md) dokumentiert.
+Verbesserter, responsiver Onlineschalter auf Grundlage der öffentlichen Originalseite und des bereitgestellten Pain-Point-Rasters. Ergänzungen zu Hund, Suche und Kontoansicht sind als PP-022 bis PP-028 im [UX-Nachtrag](docs/UX-Nachtrag-2026-10-24.md) dokumentiert.
 
 ## Start
 
