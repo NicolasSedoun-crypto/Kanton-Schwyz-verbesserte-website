@@ -1,7 +1,26 @@
 'use strict';
 let portalUser=null,portalDrafts=[],draftTimer=null,saveChain=Promise.resolve(),wizardOpen=false,accountReady=false;
 const resumeTop=document.createElement('button');resumeTop.id='resume-top';resumeTop.type='button';resumeTop.className='resume-top';resumeTop.hidden=true;$('#account').after(resumeTop);
-resumeTop.onclick=()=>{const drafts=portalDrafts.filter(d=>d.status==='draft');if(drafts.length===1)resumeDraft(drafts[0].service);else accountDashboard()};
+const resumePopover=document.createElement('section');resumePopover.id='resume-popover';resumePopover.className='resume-popover';resumePopover.hidden=true;resumePopover.setAttribute('role','dialog');resumePopover.setAttribute('aria-labelledby','resume-popover-title');$('.header').append(resumePopover);
+resumeTop.setAttribute('aria-haspopup','dialog');resumeTop.setAttribute('aria-controls','resume-popover');resumeTop.setAttribute('aria-expanded','false');
+function hideResumePopover(focus=false){resumePopover.hidden=true;resumeTop.setAttribute('aria-expanded','false');if(focus&&!resumeTop.hidden)resumeTop.focus()}
+function renderResumePopover(){
+ const open=portalDrafts.filter(d=>d.status!=='complete');
+ const sent=portalDrafts.filter(d=>d.status==='complete');
+ const items=(list,complete)=>list.map(d=>`<button type="button" class="resume-popover-item" data-quick-resume="${d.service}"><span><strong>${escapeHTML(services[d.service]?.title||'Anliegen')}</strong><small class="${complete?'processing-text':''}">${complete?'In Bearbeitung (Demo)':`Entwurf · Schritt ${d.step+1} von 4`}</small></span><span aria-hidden="true">→</span></button>`).join('');
+ resumePopover.innerHTML=`<div class="resume-popover-head"><h2 id="resume-popover-title">Meine Anliegen</h2><button type="button" class="resume-popover-close" aria-label="Übersicht schliessen">×</button></div><div class="resume-popover-body">${open.length?`<section><h3>Angefangen (${open.length})</h3>${items(open,false)}</section>`:''}${sent.length?`<section><h3>Abgeschlossen (${sent.length})</h3>${items(sent,true)}</section>`:''}<p class="resume-popover-note">Abgeschlossene Beispiele und ihr Status gehören nur zur Demo. Es wurde nichts an eine Behörde gesendet.</p></div><button type="button" class="resume-popover-all">Alle Anliegen im Konto ansehen →</button>`;
+ resumePopover.querySelector('.resume-popover-close').onclick=()=>hideResumePopover(true);
+ resumePopover.querySelector('.resume-popover-all').onclick=()=>{hideResumePopover();accountDashboard()};
+ resumePopover.querySelectorAll('[data-quick-resume]').forEach(button=>button.onclick=()=>{hideResumePopover();resumeDraft(+button.dataset.quickResume)});
+}
+resumeTop.onclick=async()=>{
+ if(!resumePopover.hidden){hideResumePopover();return}
+ resumePopover.hidden=false;resumeTop.setAttribute('aria-expanded','true');resumePopover.innerHTML='<p class="resume-popover-loading" role="status">Anliegen werden geladen …</p>';
+ try{await saveChain;await refreshDrafts();if(!resumePopover.hidden&&portalDrafts.length)renderResumePopover()}
+ catch(err){if(!resumePopover.hidden)resumePopover.innerHTML=`<p class="resume-popover-loading form-error" role="alert">${escapeHTML(err.message)}</p>`}
+};
+document.addEventListener('click',event=>{if(!resumePopover.hidden&&!resumePopover.contains(event.target)&&event.target!==resumeTop)hideResumePopover()});
+document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!resumePopover.hidden){event.preventDefault();hideResumePopover(true)}});
 const profileLabels={vorname:'Vorname',nachname:'Nachname',adresse:'Strasse und Hausnummer',plz:'Postleitzahl',ort:'Ort',email:'Kontakt-E-Mail',telefon:'Telefon',gemeinde:'Gemeinde'};
 const savedAnswerLabels={...profileLabels,dokument:'Gewünschtes Dokument',sprache:'Sprache',zweck:'Zusätzliche Hinweise',hund:'Name des Hundes',chip:'Mikrochip-Nummer',amicus:'AMICUS Personen-ID',ereignis:'Datum',grund:'Grund der Abmeldung',neuehalter:'AMICUS-Nummer der neuen Halterperson',neuadresse:'Neue Wohnadresse',rechnung:'Rechnungsreferenz',betrag:'Offener Rechnungsbetrag in CHF',rate:'Vorgeschlagener Teilbetrag in CHF',beginn:'Gewünschter Beginn',begruendung:'Begründung'};
 function savedAnswerRows(d){
@@ -17,7 +36,7 @@ function authScreen(register=false,after){wizardOpen=false;show(`<div class="acc
  $('#auth-form').onsubmit=async e=>{e.preventDefault();const form=e.currentTarget;const data=Object.fromEntries(new FormData(form));$('#auth-error').textContent='';if(register&&data.password!==data.repeat){$('#auth-error').textContent='Die Passwörter stimmen nicht überein.';return}const btn=form.querySelector('button[type=submit]');btn.disabled=true;try{const result=await portalAPI(register?'register':'login','POST',{email:data.email,password:data.password,consent:data.consent==='on',profile:{vorname:(data.vorname||'').trim(),nachname:(data.nachname||'').trim()}});portalUser=result.user;accountLabel();await refreshDrafts();if(after)after();else accountDashboard()}catch(err){$('#auth-error').textContent=err.message;btn.disabled=false}};
 }
 async function refreshDrafts(){if(portalUser)portalDrafts=(await portalAPI('drafts')).drafts;else portalDrafts=[];updateResumeBanner()}
-function updateResumeBanner(){let el=$('#resume-banner');const drafts=portalUser?portalDrafts.filter(d=>d.status==='draft'):[];resumeTop.hidden=!drafts.length;$('.header').classList.toggle('has-resume',!!drafts.length);if(!drafts.length){if(el)el.remove();return}const n=drafts.length;resumeTop.textContent=n===1?'Fortsetzen →':`Fortsetzen (${n}) →`;resumeTop.setAttribute('aria-label',n===1?`Entwurf «${services[drafts[0].service]?.title||'Anliegen'}» fortsetzen`:`${n} gespeicherte Entwürfe öffnen`);if(!el){el=document.createElement('section');el.id='resume-banner';el.className='wrap resume-banner';$('.municipality-bar').after(el)}el.innerHTML=`<div><strong>Willkommen zurück${portalUser.profile.vorname?', '+escapeHTML(portalUser.profile.vorname):''}.</strong><p>${n} ${n===1?'Anliegen wartet':'Anliegen warten'} auf Sie. Machen Sie dort weiter, wo Sie aufgehört haben.</p></div><button class="primary" id="resume-dashboard">Meine Anliegen →</button>`;$('#resume-dashboard').onclick=accountDashboard;}
+function updateResumeBanner(){let el=$('#resume-banner');const drafts=portalUser?portalDrafts.filter(d=>d.status!=='complete'):[];const total=portalUser?portalDrafts.length:0;resumeTop.hidden=!total;$('.header').classList.toggle('has-resume',!!total);if(!total)hideResumePopover();if(drafts.length)resumeTop.textContent=drafts.length===1?'Fortsetzen →':`Fortsetzen (${drafts.length}) →`;else resumeTop.textContent='Meine Anliegen →';resumeTop.setAttribute('aria-label',`Meine Anliegen öffnen: ${drafts.length} angefangene und ${total-drafts.length} abgeschlossene Beispiele`);if(!drafts.length){if(el)el.remove();return}const n=drafts.length;if(!el){el=document.createElement('section');el.id='resume-banner';el.className='wrap resume-banner';$('.municipality-bar').after(el)}el.innerHTML=`<div><strong>Willkommen zurück${portalUser.profile.vorname?', '+escapeHTML(portalUser.profile.vorname):''}.</strong><p>${n} ${n===1?'Anliegen wartet':'Anliegen warten'} auf Sie. Machen Sie dort weiter, wo Sie aufgehört haben.</p></div><button class="primary" id="resume-dashboard">Meine Anliegen →</button>`;$('#resume-dashboard').onclick=accountDashboard;}
 function savedAccountCard(d){
  const sent=d.status==='complete';
  const title=escapeHTML(services[d.service]?.title||'Anliegen');
@@ -25,6 +44,7 @@ function savedAccountCard(d){
  return `<article class="saved-item"><div><span class="tag ${sent?'processing':''}">${sent?'In Bearbeitung (Demo)':`Entwurf · Schritt ${d.step+1} von 4`}</span><h3>${title}</h3><small>${sent?'Beispiel gesendet':'Gespeichert'} am ${timestamp}</small></div><div class="saved-actions"><button class="primary" data-resume="${d.service}">${sent?'Angaben ansehen':'Fortsetzen'} →</button><button class="delete-draft" data-delete="${escapeHTML(d.id)}">Löschen</button></div></article>`;
 }
 async function accountDashboard(){
+ hideResumePopover();
  wizardOpen=false;
  try{await saveChain;await refreshDrafts()}
  catch(err){show(`<h2 id="dialog-title">Mein Konto</h2><p class="form-error">${escapeHTML(err.message)}</p><button class="primary" id="retry-account">Erneut versuchen</button>`);$('#retry-account').onclick=accountDashboard;return}
@@ -61,6 +81,7 @@ wizard=function(){wizardOpen=true;baseWizard();const form=$('#wizard');const not
  form.addEventListener('input',()=>{capture();showSaveStatus('Änderungen noch nicht gespeichert …');clearTimeout(draftTimer);draftTimer=setTimeout(()=>queueSave(),650)});form.addEventListener('change',()=>{capture();queueSave()});if(portalUser)queueSave();
 };
 async function resumeDraft(id){
+ hideResumePopover();
  try{
   await saveChain;
   await refreshDrafts();

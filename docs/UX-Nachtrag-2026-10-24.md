@@ -48,3 +48,11 @@ Für die Vorführung ausschliesslich erfundene Testdaten verwenden. Die lokalen 
 | PP-028 · Gesendete Beispiele | Nach Abschluss zeigte das Konto nur den Titel und «Demo abgeschlossen»; die eingegebenen Testangaben waren nicht mehr einsehbar. | Abgeschlossene Beispiele stehen im Konto unter «Gesendete Beispiele» mit ihren gespeicherten Angaben und dem simulierten Status «In Bearbeitung (Demo)». Der Abschluss bietet einen direkten Weg dorthin. |
 
 Der Status bei PP-028 ist ausschliesslich eine Darstellung für den UX-Prototyp. Es erfolgt keine amtliche Einreichung oder Bearbeitung. Pro Dienstleistung speichert dieses Beispielkonto weiterhin nur den jüngsten Stand; «Neu beginnen» ersetzt ihn nach einem sichtbaren Hinweis.
+
+## Ergänzung: Schnellübersicht im Kopfbereich (PP-029)
+
+| ID | Beobachtung im Prototyp | Änderung |
+| --- | --- | --- |
+| PP-029 · Fortsetzen und Status finden | «Fortsetzen» öffnete bei einem einzigen Entwurf sofort das Formular. Abgeschlossene Beispiele waren nur über die vollständige Kontoansicht sichtbar. | Der Button öffnet eine kleine Übersicht mit allen angefangenen Anliegen samt Schritt und allen abgeschlossenen Beispielen samt Demo-Status. Ein Klick öffnet den passenden Entwurf oder dessen gespeicherte Testangaben. Bei ausschliesslich abgeschlossenen Beispielen heisst der Button «Meine Anliegen». |
+
+Die Übersicht ist für Tastaturbedienung mit sichtbarem Fokus, Escape-Taste und einem Schliessen-Button ausgelegt. «In Bearbeitung (Demo)» bedeutet weiterhin keine amtliche Verarbeitung.
