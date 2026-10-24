@@ -56,3 +56,11 @@ Der Status bei PP-028 ist ausschliesslich eine Darstellung für den UX-Prototyp.
 | PP-029 · Fortsetzen und Status finden | «Fortsetzen» öffnete bei einem einzigen Entwurf sofort das Formular. Abgeschlossene Beispiele waren nur über die vollständige Kontoansicht sichtbar. | Der Button öffnet eine kleine Übersicht mit allen angefangenen Anliegen samt Schritt und allen abgeschlossenen Beispielen samt Demo-Status. Ein Klick öffnet den passenden Entwurf oder dessen gespeicherte Testangaben. Bei ausschliesslich abgeschlossenen Beispielen heisst der Button «Meine Anliegen». |
 
 Die Übersicht ist für Tastaturbedienung mit sichtbarem Fokus, Escape-Taste und einem Schliessen-Button ausgelegt. «In Bearbeitung (Demo)» bedeutet weiterhin keine amtliche Verarbeitung.
+
+## Ergänzung: verständliche Kontobezeichnungen (PP-030)
+
+| ID | Beobachtung im Prototyp | Änderung |
+| --- | --- | --- |
+| PP-030 · Status und Bezeichnungen | In Konto und Formularen standen häufig «Demo» und «Beispiel». Im Kopfbereich wirkte «Gesendete Beispiele» zudem wie eine amtliche Übermittlung. | Sichtbare Bezeichnungen heissen nun «Angefangene Anliegen», «Abgeschlossene Anliegen» und «In Bearbeitung». Daneben steht ausdrücklich, dass der Status nur für diese Website gilt und keine Angaben an eine Behörde gesendet wurden. Formularschritte heissen «Abschliessen» und erklären vor dem Klick, dass kein amtlicher Antrag entsteht. |
+
+Der Status zeigt weiterhin keine tatsächliche Bearbeitung durch eine Behörde an. Die fachliche Einreichung bleibt nur über das offizielle Angebot möglich.
