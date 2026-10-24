@@ -2,24 +2,15 @@
 
 Verbesserter, responsiver Onlineschalter auf Grundlage der öffentlichen Originalseite und des bereitgestellten Pain-Point-Rasters. Ergänzungen zu Hund, Suche und Kontoansicht sind als PP-022 bis PP-028 im [UX-Nachtrag](docs/UX-Nachtrag-2026-10-24.md) dokumentiert.
 
-## Lokal starten (nach einem GitHub-Download)
+## Start
 
-Voraussetzung: Node.js 22.13 oder neuer. ZIP-Datei entpacken und im **Ordner mit `package.json`** ein Terminal öffnen. In Windows PowerShell nacheinander ausführen:
+**Ohne Download ausprobieren:** [Online-Demo öffnen](https://schwyz-onlineschalter-neu.toastyhill32.chatgpt.site/).
 
-```powershell
-npm.cmd ci
-npm.cmd run build
-node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0000_elite_jackpot.sql
-npm.cmd run dev -- --port 4185
-```
+**Windows:** ZIP entpacken und im Ordner mit `package.json` `start.bat` doppelklicken. Node.js 22.13 oder neuer muss installiert sein. Beim ersten Start werden die nötigen Pakete und die lokale Datenbank automatisch eingerichtet; danach öffnet sich die Website im Browser. Das Fenster während der Nutzung offen lassen.
 
-Danach <http://127.0.0.1:4185/signin-with-chatgpt?return_to=/> öffnen. Das Terminal muss während der Nutzung geöffnet bleiben; `Ctrl+C` beendet den Server. Falls Port 4185 belegt ist, beim letzten Befehl eine andere Portnummer wie `4191` verwenden und dieselbe Nummer in der Adresse einsetzen.
+Für die manuelle Entwicklung startet `npm run dev -- --port 4185` die Website. Für lokale Tests zuerst `/signin-with-chatgpt?return_to=/` öffnen; die mitgelieferte lokale Identität gilt nur in der Entwicklungsumgebung.
 
-Die ersten drei Befehle sind bei einem neuen Download nur einmal nötig. Später genügt `npm.cmd run dev -- --port 4185`. Auf macOS und Linux statt `npm.cmd` einfach `npm` verwenden. Die lokale Datenbank bleibt in `.wrangler/state` auf dem jeweiligen Computer; die Sites-Veröffentlichung hat eine getrennte Datenbank.
-
-Die lokale ChatGPT-Identität ist nur für Entwicklungstests. Es werden keine amtlichen Anträge versendet; nur erfundene Testdaten verwenden. GitHub speichert den Code, betreibt aber diesen Server und die Datenbank nicht automatisch.
-
-Für Entwickler: `node scripts/prepare-portal.mjs` übernimmt Änderungen an `public/index.html` in die Startseitenroute. `node scripts/test-portal.mjs` prüft die laufende lokale API mit erfundenen Testkonten und ist fest auf Port 4185 beschränkt.
+`node scripts/prepare-portal.mjs` übernimmt Änderungen an `public/index.html` in die Startseitenroute. `node scripts/test-portal.mjs` prüft die laufende lokale API mit erfundenen Testkonten. Der Test ist fest auf den lokalen Port 4185 beschränkt.
 
 ## Umfang
 
