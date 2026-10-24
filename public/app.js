@@ -178,7 +178,15 @@ function render(){
  document.querySelectorAll('[data-topic]').forEach(b=>{const active=+b.dataset.topic===state.topic;b.classList.toggle('selected',active);b.setAttribute('aria-pressed',active)});
  document.querySelectorAll('[data-filter]').forEach(b=>{const active=b.dataset.filter===state.filter;b.classList.toggle('selected',active);b.setAttribute('aria-pressed',active)});
 }
-$('#topics').onclick=e=>{const b=e.target.closest('[data-topic]');if(!b)return;state.topic=state.topic===+b.dataset.topic?null:+b.dataset.topic;state.limit=6;render()};
+$('#topics').onclick=e=>{
+ const b=e.target.closest('[data-topic]');if(!b)return;
+ state.topic=state.topic===+b.dataset.topic?null:+b.dataset.topic;
+ state.filter='all';
+ state.limit=state.topic===null?6:services.length;
+ render();
+ const heading=$('#results-title');heading.tabIndex=-1;heading.focus({preventScroll:true});
+ $('#all-services').scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});
+};
 document.querySelectorAll('[data-filter]').forEach(b=>b.onclick=()=>{state.filter=b.dataset.filter;state.limit=6;render()});
 $('#search').oninput=showSearchResults;
 $('#search-form').onsubmit=e=>{
