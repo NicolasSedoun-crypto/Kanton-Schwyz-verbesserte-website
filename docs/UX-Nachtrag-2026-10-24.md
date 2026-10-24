@@ -64,3 +64,11 @@ Die Übersicht ist für Tastaturbedienung mit sichtbarem Fokus, Escape-Taste und
 | PP-030 · Status und Bezeichnungen | In Konto und Formularen standen häufig «Demo» und «Beispiel». Im Kopfbereich wirkte «Gesendete Beispiele» zudem wie eine amtliche Übermittlung. | Sichtbare Bezeichnungen heissen nun «Angefangene Anliegen», «Abgeschlossene Anliegen» und «In Bearbeitung». Daneben steht ausdrücklich, dass der Status nur für diese Website gilt und keine Angaben an eine Behörde gesendet wurden. Formularschritte heissen «Abschliessen» und erklären vor dem Klick, dass kein amtlicher Antrag entsteht. |
 
 Der Status zeigt weiterhin keine tatsächliche Bearbeitung durch eine Behörde an. Die fachliche Einreichung bleibt nur über das offizielle Angebot möglich.
+
+## Ergänzung: kleine Anpassung für wenig digitale Erfahrung (PP-031)
+
+| ID | Beobachtung im Prototyp | Änderung |
+| --- | --- | --- |
+| PP-031 · Lesen und Orientierung | Mehrere wichtige Beschriftungen und Beschreibungstexte waren sehr klein. Auf schmalen Bildschirmen verschwand die Hauptnavigation. AMICUS und PID standen in Vorbereitungslisten ohne unmittelbare Erklärung. | Wichtige Texte und Feldbeschriftungen sind etwas grösser. Die drei Navigationspunkte bleiben auf dem Handy sichtbar. Die Vorbereitungslisten zur Hundeanmeldung und Steuerfrist erklären die Nummern direkt am benötigten Eintrag. |
+
+Dies ist eine gezielte Verbesserung des Prototyps. Ob sie für ältere Menschen und Personen mit Deutsch als Zweitsprache ausreicht, muss mit diesen Personen getestet werden.
